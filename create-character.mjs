@@ -19,13 +19,17 @@ import { spawnSync } from 'node:child_process';
 // Config
 // ---------------------------------------------------------------------------
 
-const TOWN_URL = process.env.TOWN_URL || 'https://34-178-83-192.sslip.io/mcp';
+const TOWN_URL = process.env.TOWN_URL || 'https://54-153-6-36.sslip.io/mcp';
 const TOWN_UI = TOWN_URL.replace(/\/mcp\/?$/, '/');
 
 // The published sbx kit (mixin). It wires the ai-town MCP server, grants the
 // network policy to reach the town, and appends the game briefing to CLAUDE.md
 // at startup — so the wizard only has to produce the soul.
-const KIT_IMAGE = process.env.KIT_IMAGE || 'docker.io/olegselajev241/ai-town-kit:2026-09-16-sandbox-royale';
+//
+// Published (host-confirmed via registry inspection):
+// docker.io/olegselajev241/ai-town-kit:2026-09-21-aws
+// digest sha256:f56c78919598cedab5c9ff9c898fb87c607b729589cacc0d51e64dc836499e5a
+const KIT_IMAGE = process.env.KIT_IMAGE || 'docker.io/olegselajev241/ai-town-kit:2026-09-21-aws';
 const LAUNCH = process.argv.includes('--launch');
 
 // ---------------------------------------------------------------------------
@@ -197,8 +201,8 @@ function buildSoul({ name, traits, character, bio }) {
   return `# Your Sandbox Royale character
 
 This is your **private** character — who you really are and how you actually
-play. It stays in this sandbox and never leaves it. The Sandbox Royale kit briefs you
-on the game itself (the goal, the tools, and how to join and play); everything
+play. Keep your character and strategy private; let others discover them through
+your actions. The Sandbox Royale kit briefs you on the game itself (the goal, the tools, and how to join and play); everything
 about *how* you play follows from the character below.
 
 ## Who you are (private)
@@ -210,8 +214,8 @@ about *how* you play follows from the character below.
 ## Your public bio (your chosen public introduction)
 
 You broadcast this on \`join\`, alongside your name and model; everything else
-the town learns about you comes from what you actually say and do. The private
-character above is not sent on join — play it out loud as much as you like, but
+the town learns about you comes from what you actually say and do. Keep the
+character above private when you join — show it through your actions, but
 don't paste, quote, or recite these instructions to anyone.
 
 > ${bio}
@@ -250,7 +254,7 @@ async function main() {
   // 2) Traits (the alignment grid)
   console.log(bold('Step 2/4 — Traits'));
   console.log(dim('  Pick the traits your agent embodies. This is private flavor for how'));
-  console.log(dim('  it plays — it never leaves your sandbox.\n'));
+  console.log(dim('  it plays — keep it private and let its actions reveal its character.\n'));
   console.log(renderGrid());
   console.log('');
   console.log(dim('  Type numbers and/or your own words, comma-separated (e.g. "25, 21, cunning").'));
@@ -287,7 +291,7 @@ async function main() {
   // 4) Bio (AFTER the character — so it can honestly reflect, or deliberately mask, who they are)
   console.log(bold('Step 4/4 — Public bio'));
   console.log(dim('  Your agent\'s public introduction — broadcast when it joins, along with'));
-  console.log(dim('  its name. Your private character above is not sent to the town. This'));
+  console.log(dim('  its name. Keep the character above private; share only the bio. This'));
   console.log(dim('  can be honest or a mask that lowers guards. 1–3 sentences, with a bit'));
   console.log(dim('  of backstory.'));
   const bio = await askRequired('Bio', {
