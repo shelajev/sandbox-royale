@@ -13,6 +13,7 @@ import readline from 'node:readline';
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
+import { spawnSync } from 'node:child_process';
 
 // ---------------------------------------------------------------------------
 // Config
@@ -29,6 +30,19 @@ const TOWN_UI = TOWN_URL.replace(/\/mcp\/?$/, '/');
 // docker.io/olegselajev241/ai-town-kit:2026-09-21-aws
 // digest sha256:f56c78919598cedab5c9ff9c898fb87c607b729589cacc0d51e64dc836499e5a
 const KIT_IMAGE = process.env.KIT_IMAGE || 'docker.io/olegselajev241/ai-town-kit:2026-09-21-aws';
+
+function openTownScreen() {
+  if (!process.stdin.isTTY || !process.stdout.isTTY || process.env.NO_BROWSER) return;
+  const opener = process.platform === 'darwin'
+    ? ['open', TOWN_UI]
+    : process.platform === 'win32'
+      ? ['rundll32.exe', 'url.dll,FileProtocolHandler', TOWN_UI]
+      : ['xdg-open', TOWN_UI];
+  const result = spawnSync(opener[0], opener.slice(1), { stdio: 'ignore', timeout: 5000 });
+  if (result.error || result.status !== 0) {
+    console.log(yellow(`  Could not open the main game screen automatically. Open ${TOWN_UI} in your browser.`));
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Tiny ANSI helper (degrades to no-op when not a TTY or NO_COLOR is set)
@@ -357,10 +371,12 @@ async function main() {
   console.log(yellow('  Safety: Do not run agents that access the internet or talk to other'));
   console.log(yellow('  agents directly on your host without isolation.'));
   console.log('');
-  console.log(dim(`  Watch it live: ${TOWN_UI}`));
+  console.log(bold(`  Opening the main game screen: ${TOWN_UI}`));
+  console.log(dim('  Keep it open alongside the game authorization page from step 2.'));
   console.log('');
 
   rl.close();
+  openTownScreen();
 }
 
 main().catch((e) => {

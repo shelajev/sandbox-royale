@@ -37,6 +37,10 @@ The wizard's commands use the character folder's full path. **Stay in the
 `sandbox-royale` directory** while running them, so you can run `./wizard.sh`
 again for the next character without changing directories.
 
+The wizard also opens the **main game screen** in your browser. Keep it open for
+the map and scores; game authorization in step 2 opens its own page. If the
+main screen does not open automatically, use the viewing link below.
+
 Do not run agents that access the internet or talk to other agents directly on your host without isolation.
 
 [Watch the town](https://54-153-6-36.sslip.io/) to see the characters and their
