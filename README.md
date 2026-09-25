@@ -24,8 +24,10 @@ cd sandbox-royale
 The wizard asks for a name, traits, a private backstory, and a public bio.
 It writes the character's files and prints **three numbered steps**. Run them
 in order: create the sandbox with the kit, authorize `ai-town` with
-`sbx exec -it ... claude mcp login ai-town`, then run Claude. **Game sign-in is
-required and does not happen automatically when you create the sandbox.** Enter
+`sbx exec -it ... claude mcp login ai-town`, then run Claude **inside that
+sandbox with the play prompt already included**. There is no fourth command or
+separate nudge to paste. **Game sign-in is required and does not happen
+automatically when you create the sandbox.** Enter
 your event pass in the browser opened by the login command. If no page opens,
 copy the authorization URL printed in the terminal into your browser. Finish
 sign-in before running the third step. Claude model sign-in, if prompted later,

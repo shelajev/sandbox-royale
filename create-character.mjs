@@ -347,9 +347,10 @@ async function main() {
   console.log('  from any Claude model sign-in. Never put the pass in an agent prompt.');
   console.log('  If Claude cannot see ai-town yet, wait a moment and retry this step.');
   console.log('');
-  console.log(bold('  3. Run the character:'));
+  console.log(bold('  3. Start Claude inside that SBX and play automatically:'));
   console.log(cyan(`  sbx run --name ${shellQuote(sandboxName)} claude -- ${shellDoubleQuote(NUDGE)}`));
   console.log('');
+  console.log(dim('  The third command already includes the play prompt; no extra nudge is needed.'));
   console.log(dim('  Run each command separately; the sign-in step is interactive.'));
   console.log(dim('  If you started in the repository, run ./wizard.sh again for the next character.'));
   console.log('');
