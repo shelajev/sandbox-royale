@@ -229,6 +229,8 @@ strangers; and refer back only to things you actually saw or heard.
 }
 
 const NUDGE = `You're live in Sandbox Royale. Read the MCP resource aitown://instructions, then play your character: read .ai-town-client-id and join with it as clientId, look, and talk to anyone visible — move once only when you need deal range. Use talk for your offers, answers, and reactions so the town can hear you; poll for events, answer what is waiting on you, and keep going for several rounds. What you want and who you deal with is your character's call.`;
+const shellQuote = (value) => `'${value.replace(/'/g, "'\\''")}'`;
+const shellDoubleQuote = (value) => `"${value.replace(/[\\"$`]/g, '\\$&')}"`;
 
 // ---------------------------------------------------------------------------
 // Main
@@ -330,20 +332,29 @@ async function main() {
   console.log(`  ${dim('Folder:')} ${dir}`);
   console.log(`  ${dim('Soul:  ')} CLAUDE.md`);
   console.log('');
-  console.log(bold('  To run this character inside a Docker sandbox, copy and paste:'));
+  const sandboxName = `royale-${slug}`;
+  console.log(bold('  Run these local-sandbox steps in order from this terminal:'));
+  console.log(dim('  Stay in this directory; the commands use your character folder directly.'));
   console.log('');
-  console.log(cyan(`  cd ${slug}`));
-  console.log(cyan(`  sbx run --kit ${KIT_IMAGE} claude`));
+  console.log(bold('  1. Create the sandbox with the game kit:'));
+  console.log(cyan(`  sbx create --name ${shellQuote(sandboxName)} --kit ${shellQuote(KIT_IMAGE)} claude ${shellQuote(dir)}`));
   console.log('');
-  console.log(dim('  The kit wires the ai-town MCP server, grants the network policy, and'));
-  console.log(dim('  briefs the agent on the game — your CLAUDE.md soul is all you bring.'));
+  console.log(bold(yellow('  2. REQUIRED: authorize the game MCP connection:')));
+  console.log(cyan(`  sbx exec -it -w ${shellQuote(dir)} ${shellQuote(sandboxName)} claude mcp login ai-town`));
+  console.log('  Enter your event pass in the browser. If no page opens, copy the');
+  console.log('  authorization URL printed by the command into your browser.');
+  console.log('  Wait for sign-in to finish before starting Claude. This is separate');
+  console.log('  from any Claude model sign-in. Never put the pass in an agent prompt.');
+  console.log('  If Claude cannot see ai-town yet, wait a moment and retry this step.');
+  console.log('');
+  console.log(bold('  3. Run the character:'));
+  console.log(cyan(`  sbx run --name ${shellQuote(sandboxName)} claude -- ${shellDoubleQuote(NUDGE)}`));
+  console.log('');
+  console.log(dim('  Run each command separately; the sign-in step is interactive.'));
+  console.log(dim('  If you started in the repository, run ./wizard.sh again for the next character.'));
   console.log('');
   console.log(yellow('  Safety: Do not run agents that access the internet or talk to other'));
   console.log(yellow('  agents directly on your host without isolation.'));
-  console.log('');
-  console.log(bold('  If it doesn\'t start on its own, paste this to nudge it:'));
-  console.log('');
-  console.log(magenta('  ' + NUDGE));
   console.log('');
   console.log(dim(`  Watch it live: ${TOWN_UI}`));
   console.log('');
