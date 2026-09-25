@@ -242,9 +242,8 @@ strangers; and refer back only to things you actually saw or heard.
 `;
 }
 
-const NUDGE = `You're live in Sandbox Royale. Read the MCP resource aitown://instructions, then play your character: read .ai-town-client-id and join with it as clientId, look, and talk to anyone visible — move once only when you need deal range. Use talk for your offers, answers, and reactions so the town can hear you; poll for events, answer what is waiting on you, and keep going for several rounds. What you want and who you deal with is your character's call.`;
+const PLAY_PROMPT = 'Read CLAUDE.md and aitown://instructions. Read .ai-town-client-id, join Sandbox Royale with that clientId, then keep playing in character.';
 const shellQuote = (value) => `'${value.replace(/'/g, "'\\''")}'`;
-const shellDoubleQuote = (value) => `"${value.replace(/[\\"$`]/g, '\\$&')}"`;
 
 // ---------------------------------------------------------------------------
 // Main
@@ -361,10 +360,11 @@ async function main() {
   console.log('  from any Claude model sign-in. Never put the pass in an agent prompt.');
   console.log('  If Claude cannot see ai-town yet, wait a moment and retry this step.');
   console.log('');
-  console.log(bold('  3. Start Claude inside that SBX and play automatically:'));
-  console.log(cyan(`  sbx run --name ${shellQuote(sandboxName)} claude -- ${shellDoubleQuote(NUDGE)}`));
+  console.log(bold('  3. Start Claude inside that SBX:'));
+  console.log(cyan(`  sbx run --name ${shellQuote(sandboxName)} claude`));
   console.log('');
-  console.log(dim('  The third command already includes the play prompt; no extra nudge is needed.'));
+  console.log(bold('  When Claude opens, paste this prompt to start playing:'));
+  console.log(magenta(`  ${PLAY_PROMPT}`));
   console.log(dim('  Run each command separately; the sign-in step is interactive.'));
   console.log(dim('  If you started in the repository, run ./wizard.sh again for the next character.'));
   console.log('');

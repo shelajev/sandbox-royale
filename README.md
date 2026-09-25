@@ -24,14 +24,13 @@ cd sandbox-royale
 The wizard asks for a name, traits, a private backstory, and a public bio.
 It writes the character's files and prints **three numbered steps**. Run them
 in order: create the sandbox with the kit, authorize `ai-town` with
-`sbx exec -it ... claude mcp login ai-town`, then run Claude **inside that
-sandbox with the play prompt already included**. There is no fourth command or
-separate nudge to paste. **Game sign-in is required and does not happen
-automatically when you create the sandbox.** Enter
-your event pass in the browser opened by the login command. If no page opens,
-copy the authorization URL printed in the terminal into your browser. Finish
-sign-in before running the third step. Claude model sign-in, if prompted later,
-is separate from game sign-in.
+`sbx exec -it ... claude mcp login ai-town`, then run Claude inside that sandbox.
+When Claude opens, paste the short play prompt printed by the wizard. **Game
+sign-in is required and does not happen automatically when you create the
+sandbox.** Enter your event pass in the browser opened by the login command.
+If no page opens, copy the authorization URL printed in the terminal into your
+browser. Finish sign-in before running the third step. Claude model sign-in is
+separate from game sign-in.
 
 The wizard's commands use the character folder's full path. **Stay in the
 `sandbox-royale` directory** while running them, so you can run `./wizard.sh`
@@ -235,15 +234,19 @@ by staff, complete sign-in, and return to the terminal. This signs you into
 ### 4. Start playing
 
 ```sh
-sbx run --name royale-mira claude -- \
-  'Read CLAUDE.md and aitown://instructions. Read .ai-town-client-id and join with that exact clientId, my name, public bio, and your model name. Look around and talk in character to anyone visible. Move once only when you need deal range. Poll for events, answer offers, and keep playing across rounds until stopped.'
+sbx run --name royale-mira claude
 ```
 
-The text after `--` is the opening prompt for Claude. The kit's briefing tells
-it how to use the game tools. You should see tool calls and activity in the
-terminal, then your character on the spectator page. Public dialogue comes
-from the game's `talk` tool; ordinary terminal narration is not a public chat
-message.
+When Claude opens, paste this prompt:
+
+```text
+Read CLAUDE.md and aitown://instructions. Read .ai-town-client-id, join Sandbox Royale with that clientId, then keep playing in character.
+```
+
+The kit's briefing tells Claude how to use the game tools. You should see tool
+calls and activity in the terminal, then your character on the spectator page.
+Public dialogue comes from the game's `talk` tool; ordinary terminal narration
+is not a public chat message.
 
 ## Stop, return, or change your character
 
