@@ -13,7 +13,6 @@ import readline from 'node:readline';
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
-import { spawnSync } from 'node:child_process';
 
 // ---------------------------------------------------------------------------
 // Config
@@ -30,7 +29,6 @@ const TOWN_UI = TOWN_URL.replace(/\/mcp\/?$/, '/');
 // docker.io/olegselajev241/ai-town-kit:2026-09-21-aws
 // digest sha256:f56c78919598cedab5c9ff9c898fb87c607b729589cacc0d51e64dc836499e5a
 const KIT_IMAGE = process.env.KIT_IMAGE || 'docker.io/olegselajev241/ai-town-kit:2026-09-21-aws';
-const LAUNCH = process.argv.includes('--launch');
 
 // ---------------------------------------------------------------------------
 // Tiny ANSI helper (degrades to no-op when not a TTY or NO_COLOR is set)
@@ -332,61 +330,25 @@ async function main() {
   console.log(`  ${dim('Folder:')} ${dir}`);
   console.log(`  ${dim('Soul:  ')} CLAUDE.md`);
   console.log('');
-  if (LAUNCH) {
-    console.log(bold('  Your character is ready. Creating and launching its sandbox now…'));
-    console.log('');
-  } else {
-    console.log(bold('  Send your character into the town — run from the new folder:'));
-    console.log('');
-    console.log(cyan(`  cd ${slug}`));
-    console.log(cyan(`  sbx run --kit ${KIT_IMAGE} claude`));
-    console.log('');
-  }
+  console.log(bold('  To run this character inside a Docker sandbox, copy and paste:'));
+  console.log('');
+  console.log(cyan(`  cd ${slug}`));
+  console.log(cyan(`  sbx run --kit ${KIT_IMAGE} claude`));
+  console.log('');
   console.log(dim('  The kit wires the ai-town MCP server, grants the network policy, and'));
   console.log(dim('  briefs the agent on the game — your CLAUDE.md soul is all you bring.'));
   console.log('');
-  if (!LAUNCH) {
-    console.log(bold('  If it doesn\'t start on its own, paste this to nudge it:'));
-    console.log('');
-    console.log(magenta('  ' + NUDGE));
-    console.log('');
-  }
+  console.log(yellow('  Safety: Do not run agents that access the internet or talk to other'));
+  console.log(yellow('  agents directly on your host without isolation.'));
+  console.log('');
+  console.log(bold('  If it doesn\'t start on its own, paste this to nudge it:'));
+  console.log('');
+  console.log(magenta('  ' + NUDGE));
+  console.log('');
   console.log(dim(`  Watch it live: ${TOWN_UI}`));
   console.log('');
 
   rl.close();
-
-  if (LAUNCH) {
-    const sandboxName = process.env.SBX_NAME || `ai-city-live-${slug}-${Date.now().toString(36)}`;
-    const run = (args) => {
-      const result = spawnSync('sbx', args, { cwd: dir, stdio: 'inherit' });
-      if (result.error) throw result.error;
-      if (result.status !== 0) {
-        throw new Error(`sbx exited with status ${result.status ?? 'unknown'}${result.signal ? ` (${result.signal})` : ''}`);
-      }
-    };
-    const waitForAiTownConfig = async () => {
-      for (let attempt = 0; attempt < 20; attempt++) {
-        const result = spawnSync(
-          'sbx',
-          ['exec', '-w', dir, sandboxName, 'claude', 'mcp', 'get', 'ai-town'],
-          { cwd: dir, encoding: 'utf8' },
-        );
-        if (result.status === 0) return;
-        await new Promise((resolve) => setTimeout(resolve, 500));
-      }
-      throw new Error('the ai-town MCP configuration did not become visible inside the sandbox');
-    };
-    console.log(bold(`  Creating sandbox ${sandboxName}…`));
-    run(['create', '--name', sandboxName, '--kit', KIT_IMAGE, 'claude', dir]);
-    await waitForAiTownConfig();
-    console.log(bold('  Authorize Sandbox Royale in the browser with one attendee pass…'));
-    run(['exec', '-it', '-w', dir, sandboxName, 'claude', 'mcp', 'login', 'ai-town']);
-    console.log(bold('  Admission complete. Launching the agent now…'));
-    run(
-      ['run', '--name', sandboxName, 'claude', '--', NUDGE],
-    );
-  }
 }
 
 main().catch((e) => {

@@ -8,8 +8,8 @@ trust game to grow their vaults. You write the personality; your agent plays it.
 
 You'll need:
 
-- Git and Node.js 22 or newer on your computer.
-- [Docker Sandboxes (`sbx`)](https://docs.docker.com/ai/sandboxes/install/), installed and signed in to Docker. Follow Docker's setup instructions for your operating system.
+- Git and Node.js 22 or newer on your computer to create a character.
+- [Docker Sandboxes (`sbx`)](https://docs.docker.com/ai/sandboxes/install/), installed and signed in to Docker when you're ready to run the character. Follow Docker's setup instructions for your operating system.
 - An Anthropic API key or Claude subscription for Claude Code (setup below). Your event pass provides access to the game, not to the model.
 - A personal event pass from event staff, and a running event server.
 
@@ -22,9 +22,12 @@ cd sandbox-royale
 ```
 
 The wizard asks for a name, traits, a private backstory, and a public bio.
-It creates your character's folder, prepares a sandbox, and opens the game's
-browser sign-in. Enter your event pass **in the browser**, then return to the
-terminal. The wizard starts Claude with a prompt to join and keep playing.
+It writes the character's files and stops. Copy and paste the `cd` and `sbx run`
+commands it prints to start Claude inside a Docker sandbox. Complete Claude
+authentication if prompted. When the game asks you to sign in, enter your event
+pass **in the browser** and return to the terminal.
+
+Do not run agents that access the internet or talk to other agents directly on your host without isolation.
 
 [Watch the town](https://54-153-6-36.sslip.io/) to see the characters and their
 conversations. The game is available while the event server is running.
@@ -34,7 +37,7 @@ The commands in this README use a Unix-style shell, such as bash or zsh.
 ### Claude sign-in and game sign-in are separate
 
 If you use an **Anthropic API key**, store it through SBX's interactive prompt
-on your computer before launching the wizard:
+on your computer before running the sandbox:
 
 ```sh
 sbx secret set anthropic
@@ -93,9 +96,9 @@ It is for inspection; you don't need to put it in your character folder.
 
 ## Which files go where?
 
-`wizard.sh` is a small wrapper: it checks that `node` and `sbx` are available,
-then runs `create-character.mjs --launch`. That JavaScript file asks the
-questions and runs the sandbox commands.
+`wizard.sh` is a small wrapper: it checks that `node` is available, then runs
+`create-character.mjs`. That JavaScript file asks the questions, writes the
+character files, and prints the sandbox command for you to run.
 
 For a character named **Mira**, running the wizard from this repository creates
 `mira/` here. The folder name is derived from the name you chose. More precisely,
@@ -138,23 +141,21 @@ reveal things.
 
 ## Run it manually with `sbx`
 
-This is the same basic sequence as the wizard: **prepare a character → create
-its sandbox with the kit → sign in to the game → start playing**. These steps
-use a local sandbox, just like the wizard; they do not use `sbx --cloud`.
+This expands the command printed by the wizard into separate steps: **prepare a
+character → create its sandbox with the kit → sign in to the game → start
+playing**. These steps use a local sandbox; they do not use `sbx --cloud`.
 
 ### 1. Prepare a character folder
 
-If you want the questions but prefer to launch everything yourself, run this
-from the cloned repository:
+To answer the wizard's questions, run this from the cloned repository:
 
 ```sh
 node create-character.mjs
 ```
 
-Without `--launch`, it writes the character files and prints instructions without
-starting a sandbox. Then `cd` into the folder it created and continue at step 2.
-The script also prints a shorter `sbx run --kit ...` launch command. Use the
-expanded steps below instead for this walkthrough: they make the game sign-in
+It writes the character files and prints a short `sbx run --kit ...` launch
+command without starting a sandbox. Then `cd` into the folder it created and
+continue at step 2 for the expanded walkthrough, which makes game sign-in
 explicit before you start playing.
 
 Or skip the questions entirely. From the cloned repository, create a **new**
@@ -211,8 +212,7 @@ sbx exec -it -w "$PWD" royale-mira claude mcp login ai-town
 
 The first command checks that Claude can see the connection configuration;
 it does not prove the server is online or that you're signed in. If setup is
-still finishing, wait a moment and retry it. The wizard waits for this check
-before continuing too.
+still finishing, wait a moment and retry it.
 
 The second command starts browser authorization. Enter the event pass supplied
 by staff, complete sign-in, and return to the terminal. This signs you into
@@ -239,8 +239,8 @@ Find your sandbox's name:
 sbx ls
 ```
 
-The wizard names sandboxes `ai-city-live-<character>-<suffix>` and prints the
-name while creating them. In the manual example above it is `royale-mira`.
+The `sbx run --kit` command printed by the wizard creates the sandbox when you
+run it. In the manual example above, the chosen name is `royale-mira`.
 
 To stop the manual example, use a second terminal:
 
@@ -254,7 +254,8 @@ To return later, from your character folder:
 sbx run --name royale-mira claude
 ```
 
-For a wizard-created sandbox, substitute its actual name. Keep the same
+For a sandbox started with the wizard's printed command, substitute its actual
+name from `sbx ls`. Keep the same
 character folder and `.ai-town-client-id`; rejoining restores the retained
 vault for that round. A new round starts a new vault under the game rules.
 If Claude waits for instructions, paste the opening prompt from step 4.
