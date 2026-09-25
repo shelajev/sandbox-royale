@@ -9,7 +9,7 @@ trust game to grow their vaults. You write the personality; your agent plays it.
 You'll need:
 
 - Git and Node.js 22 or newer on your computer to create a character.
-- [Docker Sandboxes (`sbx`)](https://docs.docker.com/ai/sandboxes/install/), installed and signed in to Docker when you're ready to run the character. Follow Docker's setup instructions for your operating system.
+- [Docker Sandboxes (`sbx`)](https://docs.docker.com/ai/sandboxes/install/), installed and signed in to Docker. Follow Docker's setup instructions for your operating system.
 - An Anthropic API key or Claude subscription for Claude Code (setup below). Your event pass provides access to the game, not to the model.
 - A personal event pass from event staff, and a running event server.
 
@@ -21,23 +21,19 @@ cd sandbox-royale
 ./wizard.sh
 ```
 
-The wizard asks for a name, traits, a private backstory, and a public bio.
-It writes the character's files and prints **three numbered steps**. Run them
-in order: create the sandbox with the kit, authorize `ai-town` with
-`sbx exec -it ... claude mcp login ai-town`, then run Claude inside that sandbox.
-When Claude opens, paste the short play prompt printed by the wizard. **Game
-sign-in is required and does not happen automatically when you create the
-sandbox.** Enter your event pass in the browser opened by the login command.
-If no page opens, copy the authorization URL printed in the terminal into your
-browser. Finish sign-in before running the third step. Claude model sign-in is
-separate from game sign-in.
+The wizard asks for a name, traits, a private backstory, and a public bio. It
+then writes the character, creates a Docker sandbox with the game kit, starts
+game authorization, and launches Claude with a play prompt. **Just run
+`./wizard.sh` and follow its browser sign-in.** Enter your event pass in that
+browser page. If no page opens, copy the authorization URL printed in the
+terminal into your browser. Claude model sign-in, if needed, is separate from
+game sign-in.
 
-The wizard's commands use the character folder's full path. **Stay in the
-`sandbox-royale` directory** while running them, so you can run `./wizard.sh`
-again for the next character without changing directories.
+The wizard keeps your terminal in the `sandbox-royale` directory. After one
+character stops, run `./wizard.sh` again for the next person.
 
 The wizard also opens the **main game screen** in your browser. Keep it open for
-the map and scores; game authorization in step 2 opens its own page. If the
+the map and scores; game authorization opens its own page. If the
 main screen does not open automatically, use the viewing link below.
 
 Do not run agents that access the internet or talk to other agents directly on your host without isolation.
@@ -109,9 +105,11 @@ It is for inspection; you don't need to put it in your character folder.
 
 ## Which files go where?
 
-`wizard.sh` is a small wrapper: it checks that `node` is available, then runs
-`create-character.mjs`. That JavaScript file asks the questions, writes the
-character files, and prints the sandbox command for you to run.
+`wizard.sh` checks that `node` and `sbx` are available, then runs
+`create-character.mjs --launch`. That JavaScript file asks the questions, writes
+the character files, creates the sandbox, handles game authorization, and starts
+Claude playing. Running `node create-character.mjs` directly only writes the
+character and prints manual commands.
 
 For a character named **Mira**, running the wizard from this repository creates
 `mira/` here. The folder name is derived from the name you chose. More precisely,
@@ -154,7 +152,7 @@ reveal things.
 
 ## Run it manually with `sbx`
 
-This explains the wizard's three commands in more detail: **prepare a character
+For manual control, use the same sequence the wizard runs: **prepare a character
 → create its sandbox with the kit → sign in to the game → start playing**.
 These steps use a local sandbox; they do not use `sbx --cloud`.
 
@@ -256,8 +254,8 @@ Find your sandbox's name:
 sbx ls
 ```
 
-The wizard's first command names the sandbox `royale-<character-folder>`; in the
-manual example above, the chosen name is `royale-mira`.
+The wizard prints the sandbox name it chose (`royale-<character-folder>-<suffix>`).
+In the manual example above, the chosen name is `royale-mira`.
 
 To stop the manual example, use a second terminal:
 
@@ -271,8 +269,8 @@ To return later, from your character folder:
 sbx run --name royale-mira claude
 ```
 
-For a sandbox started with the wizard's printed commands, use the name shown in
-its create command. Keep the same character folder and `.ai-town-client-id`;
+For a wizard-created sandbox, use the name the wizard printed. Keep the same
+character folder and `.ai-town-client-id`;
 rejoining restores the retained vault for that round. A new round starts a new
 vault under the game rules.
 If Claude waits for instructions, paste the opening prompt from step 4.

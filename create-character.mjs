@@ -4,10 +4,9 @@
 //
 //   node create-character.mjs
 //
-// Walks you through name -> traits -> private character -> public bio, writes a
-// <name>/CLAUDE.md character file, and prints the `sbx run --kit ... claude`
-// command that plays it. The kit handles MCP wiring, network policy, and the
-// game briefing.
+// Walks you through name -> traits -> private character -> public bio and
+// writes a <name>/CLAUDE.md character file. --launch also creates the sandbox,
+// handles browser game authorization, and starts the agent playing.
 
 import readline from 'node:readline';
 import fs from 'node:fs';
@@ -30,6 +29,7 @@ const TOWN_UI = TOWN_URL.replace(/\/mcp\/?$/, '/');
 // docker.io/olegselajev241/ai-town-kit:2026-09-21-aws
 // digest sha256:f56c78919598cedab5c9ff9c898fb87c607b729589cacc0d51e64dc836499e5a
 const KIT_IMAGE = process.env.KIT_IMAGE || 'docker.io/olegselajev241/ai-town-kit:2026-09-21-aws';
+const LAUNCH = process.argv.includes('--launch') && !process.argv.includes('--no-launch');
 
 function openTownScreen() {
   if (!process.stdin.isTTY || !process.stdout.isTTY || process.env.NO_BROWSER) return;
@@ -243,6 +243,7 @@ strangers; and refer back only to things you actually saw or heard.
 }
 
 const PLAY_PROMPT = 'Read CLAUDE.md and aitown://instructions. Read .ai-town-client-id, join Sandbox Royale with that clientId, then keep playing in character.';
+const LAUNCH_PROMPT = `You're live in Sandbox Royale. Read CLAUDE.md and the MCP resource aitown://instructions, then play your character: read .ai-town-client-id and join with it as clientId, look, and talk to anyone visible — move once only when you need deal range. Use talk for your offers, answers, and reactions so the town can hear you; poll for events, answer what is waiting on you, and keep going for several rounds. What you want and who you deal with is your character's call.`;
 const shellQuote = (value) => `'${value.replace(/'/g, "'\\''")}'`;
 
 // ---------------------------------------------------------------------------
@@ -345,38 +346,75 @@ async function main() {
   console.log(`  ${dim('Folder:')} ${dir}`);
   console.log(`  ${dim('Soul:  ')} CLAUDE.md`);
   console.log('');
-  const sandboxName = `royale-${slug}`;
-  console.log(bold('  Run these local-sandbox steps in order from this terminal:'));
-  console.log(dim('  Stay in this directory; the commands use your character folder directly.'));
-  console.log('');
-  console.log(bold('  1. Create the sandbox with the game kit:'));
-  console.log(cyan(`  sbx create --name ${shellQuote(sandboxName)} --kit ${shellQuote(KIT_IMAGE)} claude ${shellQuote(dir)}`));
-  console.log('');
-  console.log(bold(yellow('  2. REQUIRED: authorize the game MCP connection:')));
-  console.log(cyan(`  sbx exec -it -w ${shellQuote(dir)} ${shellQuote(sandboxName)} claude mcp login ai-town`));
-  console.log('  Enter your event pass in the browser. If no page opens, copy the');
-  console.log('  authorization URL printed by the command into your browser.');
-  console.log('  Wait for sign-in to finish before starting Claude. This is separate');
-  console.log('  from any Claude model sign-in. Never put the pass in an agent prompt.');
-  console.log('  If Claude cannot see ai-town yet, wait a moment and retry this step.');
-  console.log('');
-  console.log(bold('  3. Start Claude inside that SBX:'));
-  console.log(cyan(`  sbx run --name ${shellQuote(sandboxName)} claude`));
-  console.log('');
-  console.log(bold('  When Claude opens, paste this prompt to start playing:'));
-  console.log(magenta(`  ${PLAY_PROMPT}`));
-  console.log(dim('  Run each command separately; the sign-in step is interactive.'));
-  console.log(dim('  If you started in the repository, run ./wizard.sh again for the next character.'));
-  console.log('');
+  const sandboxName = LAUNCH
+    ? process.env.SBX_NAME || `royale-${slug}-${Date.now().toString(36)}`
+    : `royale-${slug}`;
+  if (!LAUNCH) {
+    console.log(bold('  Run these local-sandbox steps in order from this terminal:'));
+    console.log(dim('  Stay in this directory; the commands use your character folder directly.'));
+    console.log('');
+    console.log(bold('  1. Create the sandbox with the game kit:'));
+    console.log(cyan(`  sbx create --name ${shellQuote(sandboxName)} --kit ${shellQuote(KIT_IMAGE)} claude ${shellQuote(dir)}`));
+    console.log('');
+    console.log(bold(yellow('  2. REQUIRED: authorize the game MCP connection:')));
+    console.log(cyan(`  sbx exec -it -w ${shellQuote(dir)} ${shellQuote(sandboxName)} claude mcp login ai-town`));
+    console.log('  Enter your event pass in the browser. If no page opens, copy the');
+    console.log('  authorization URL printed by the command into your browser.');
+    console.log('  Wait for sign-in to finish before starting Claude. This is separate');
+    console.log('  from any Claude model sign-in. Never put the pass in an agent prompt.');
+    console.log('  If Claude cannot see ai-town yet, wait a moment and retry this step.');
+    console.log('');
+    console.log(bold('  3. Start Claude inside that SBX:'));
+    console.log(cyan(`  sbx run --name ${shellQuote(sandboxName)} claude`));
+    console.log('');
+    console.log(bold('  When Claude opens, paste this prompt to start playing:'));
+    console.log(magenta(`  ${PLAY_PROMPT}`));
+    console.log(dim('  Run each command separately; the sign-in step is interactive.'));
+    console.log('');
+  } else {
+    console.log(bold(`  Sandbox: ${sandboxName}`));
+    console.log(dim('  The wizard will create it, authorize the game, and start Claude playing.'));
+    console.log('');
+  }
   console.log(yellow('  Safety: Do not run agents that access the internet or talk to other'));
   console.log(yellow('  agents directly on your host without isolation.'));
   console.log('');
   console.log(bold(`  Opening the main game screen: ${TOWN_UI}`));
-  console.log(dim('  Keep it open alongside the game authorization page from step 2.'));
+  console.log(dim('  Keep it open alongside the game authorization page.'));
   console.log('');
 
   rl.close();
   openTownScreen();
+
+  if (!LAUNCH) return;
+
+  const runSbx = (args) => {
+    const result = spawnSync('sbx', args, { cwd: dir, stdio: 'inherit' });
+    if (result.error) throw result.error;
+    if (result.status !== 0) {
+      throw new Error(`sbx ${args[0]} exited with status ${result.status ?? 'unknown'}${result.signal ? ` (${result.signal})` : ''}`);
+    }
+  };
+
+  console.log(bold(`  Creating sandbox ${sandboxName}…`));
+  runSbx(['create', '--name', sandboxName, '--kit', KIT_IMAGE, 'claude', dir]);
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const result = spawnSync('sbx',
+      ['exec', '-w', dir, sandboxName, 'claude', 'mcp', 'get', 'ai-town'],
+      { cwd: dir, stdio: 'ignore' });
+    if (result.status === 0) break;
+    if (attempt === 19) throw new Error('the ai-town MCP configuration did not become visible inside the sandbox');
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+
+  console.log(bold('\n  Authorize Sandbox Royale with your event pass in the browser.'));
+  console.log('  If no page opens, copy the authorization URL printed below into your browser.');
+  console.log('  The event pass goes in the browser, never in an agent prompt.\n');
+  runSbx(['exec', '-it', '-w', dir, sandboxName, 'claude', 'mcp', 'login', 'ai-town']);
+
+  console.log(bold('\n  Game sign-in complete. Starting Claude and telling it to play…\n'));
+  runSbx(['run', '--name', sandboxName, 'claude', '--', LAUNCH_PROMPT]);
+  console.log('\n  Claude session ended. Run ./wizard.sh again for the next character.');
 }
 
 main().catch((e) => {
